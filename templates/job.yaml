@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "contentpass.fullname" . }}-job
+  labels:
+    {{- include "contentpass.labels" . | nindent 4 }}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ include "contentpass.serviceAccountName" . }}
+      containers:
+      - name: {{ .Values.job.container.name }}
+        image: "{{ .Values.job.image.repository }}:{{ .Values.job.image.tag }}"
+        imagePullPolicy: {{ .Values.job.image.pullPolicy }}
+        command: ["dockerize", "-wait", "http://{{ include "contentpass.fullname" . }}:{{ .Values.service.port }}", "npm", "test"]
+        env:
+        - name: API_URL
+          value: "http://{{ include "contentpass.fullname" . }}:{{ .Values.service.port }}"
+      restartPolicy: {{ .Values.job.container.restartPolicy }}
+  backoffLimit: {{ .Values.job.backoffLimit }}
